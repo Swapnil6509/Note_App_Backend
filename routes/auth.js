@@ -4,7 +4,8 @@ const {
   signup,
   signin,
   verifySignin,
-  requestOTP
+  requestOTP,
+  resendOTP
 } = require("../controllers/authController");
 
 // Signup routes
@@ -14,7 +15,7 @@ router.post("/signup", signup);
 router.post("/signin", signin);
 router.post("/verify-signin", verifySignin);
 
-// (Optional) Old OTP routes if you still need them
-router.post("/request-otp", requestOTP);
 
+router.post("/request-otp", requestOTP);
+router.post("/resend-otp", resendOTP); 
 module.exports = router;

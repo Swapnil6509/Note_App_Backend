@@ -251,3 +251,63 @@ exports.requestOTP = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+// =============================
+// RESEND OTP CONTROLLER
+// =============================
+exports.resendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    // Check if the user exists
+    const { data: existingUsers, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email);
+
+    if (userError) throw userError;
+
+    if (!existingUsers || existingUsers.length === 0) {
+      return res.status(404).json({ error: "User not found. Please sign up first." });
+    }
+
+    const user = existingUsers[0];
+
+    // Delete all old OTPs for this user 🔄
+    const { error: deleteError } = await supabase
+      .from("otps")
+      .delete()
+      .eq("user_id", user.id);
+
+    if (deleteError) throw deleteError;
+
+    // Clean up any expired OTPs for everyone
+    await cleanupExpiredOTPs();
+
+    // Generate a new OTP
+    const otp = generateOTP();
+    const expiresAt = new Date(Date.now() + 5 * 60000).toISOString();
+
+    // Save new OTP
+    const { error: otpError } = await supabase.from("otps").insert([
+      {
+        user_id: user.id,
+        otp,
+        expires_at: expiresAt,
+      },
+    ]);
+    if (otpError) throw otpError;
+
+    // Send new OTP via email
+    await sendOTP(email, otp);
+
+    res.json({
+      message: "A new OTP has been sent successfully.",
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
