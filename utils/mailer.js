@@ -112,7 +112,7 @@ async function sendOTP(email, otp) {
     </html>`;
 
     await transporter.sendMail({
-      from: `"Notes App" <${process.env.EMAIL_USER}>`,
+      from: `"Notes App by HD" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Your OTP Code For Note Taking App",
       html: htmlTemplate,
